@@ -1,0 +1,56 @@
+image: golang:1.21
+
+stages:
+  - build
+  - deploy
+  
+build_app:
+  stage: build
+  script:
+    - GOOS=linux GOARCH=arm64 go get ./... # Fetch the dependencies
+    - GOOS=linux GOARCH=arm64 go build -o web # Compile the application
+  artifacts:
+    paths:
+      - web # Assuming 'myapp' is the output binary after the build
+      - .env.example
+    expire_in: 1 hour
+
+deploy_dev:
+  stage: deploy
+  image: alpine:latest
+  before_script:
+    - 'which ssh-agent || ( apk add --update openssh )'
+    - eval $(ssh-agent -s)
+    - echo "$EC2_PRIVATE_KEY" | tr -d '\r' | ssh-add - > /dev/null
+    - mkdir -p ~/.ssh
+    - chmod 700 ~/.ssh
+    - echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config
+  script:
+    - scp -r web ec2-user@ec2-18-140-126-145.ap-southeast-1.compute.amazonaws.com:/tmp/p2h_api_dev
+    - scp -r .env.example ec2-user@ec2-18-140-126-145.ap-southeast-1.compute.amazonaws.com:/tmp/.env_p2h_dev
+    - ssh ec2-user@ec2-18-140-126-145.ap-southeast-1.compute.amazonaws.com "sudo mv /tmp/p2h_api_dev /root/web-app/p2h-dev/web_dev"
+    - ssh ec2-user@ec2-18-140-126-145.ap-southeast-1.compute.amazonaws.com "sudo mv /tmp/.env_p2h_dev /root/web-app/p2h-dev/.env"
+    - ssh ec2-user@ec2-18-140-126-145.ap-southeast-1.compute.amazonaws.com "sudo rm -rf /tmp/p2h_api_dev"
+    - ssh ec2-user@ec2-18-140-126-145.ap-southeast-1.compute.amazonaws.com "sudo supervisorctl reread"
+    - ssh ec2-user@ec2-18-140-126-145.ap-southeast-1.compute.amazonaws.com "sudo supervisorctl update"
+    - ssh ec2-user@ec2-18-140-126-145.ap-southeast-1.compute.amazonaws.com "sudo supervisorctl restart p2h-dev"
+  only:
+    - dev # or any branch you want to deploy from
+
+deploy_prod:
+  stage: deploy
+  image: alpine:latest
+  before_script:
+    - 'which ssh-agent || ( apk add --update openssh )'
+    - eval $(ssh-agent -s)
+    - echo "$EC2_PRIVATE_KEY" | tr -d '\r' | ssh-add - > /dev/null
+    - mkdir -p ~/.ssh
+    - chmod 700 ~/.ssh
+    - echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config
+  script:
+    - scp -r web ec2-user@ec2-18-140-126-145.ap-southeast-1.compute.amazonaws.com:/tmp/p2h_api_deploy
+    - ssh ec2-user@ec2-18-140-126-145.ap-southeast-1.compute.amazonaws.com "sudo mv /tmp/p2h_api_deploy /root/web-app/p2h/web"
+    - ssh ec2-user@ec2-18-140-126-145.ap-southeast-1.compute.amazonaws.com "sudo rm -rf /tmp/p2h_api_deploy"
+    - ssh ec2-user@ec2-18-140-126-145.ap-southeast-1.compute.amazonaws.com "sudo supervisorctl restart p2h"
+  only:
+    - master # or any branch you want to deploy from

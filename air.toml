@@ -1,0 +1,25 @@
+# air.toml
+
+# Config file for [Air](https://github.com/cosmtrek/air) in TOML format
+
+# Working directory (root of your project)
+root = "."
+tmp_dir = "tmp"
+
+[build]
+# Just plain old shell command. You could also use `make`.
+cmd = "go run main.go"
+# Binary file yields from `cmd`.
+bin = "./tmp/main"
+# Customize binary storage dir, default is . (working directory)
+# bin = "./bin"
+
+[run]
+# Path to file that triggers a restart. Watched recursively in all directories. (recommended to be `**/*.go`)
+watcher = ["*.go", "**/*.go"]
+# Watching delay, if the system performance is lower, it is recommended to set the watcher_delay to 500 or even higher.
+watcher_delay = 1000
+
+[daemon]
+# Customize log directory, default is . (working directory)
+log_dir = "./log"

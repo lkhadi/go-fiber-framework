@@ -1,0 +1,34 @@
+package main
+
+import (
+	"crypto/rand"
+	"encoding/base64"
+	"fmt"
+)
+
+func generateJWTSecretKey(length int) (string, error) {
+	bytes := make([]byte, length)
+	_, err := rand.Read(bytes)
+	if err != nil {
+		return "", err
+	}
+
+	// Encode the random bytes to base64 to create a string
+	encodedKey := base64.StdEncoding.EncodeToString(bytes)
+	return encodedKey, nil
+}
+
+func main() {
+	// Specify the desired length for the JWT secret key
+	keyLength := 32
+
+	// Generate the JWT secret key
+	secretKey, err := generateJWTSecretKey(keyLength)
+	if err != nil {
+		fmt.Println("Error generating JWT secret key:", err)
+		return
+	}
+
+	// Print the generated JWT secret key
+	fmt.Println("Generated JWT Secret Key:", secretKey)
+}
