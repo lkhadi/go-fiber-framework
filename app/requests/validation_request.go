@@ -67,12 +67,12 @@ func ValRequiredIf(fl validator.FieldLevel) bool {
 	}
 
 	if tagParts[1] == "=" {
-		if (tagParts[2] == targetField.String() && fieldValue != "") || tagParts[2] == targetField.String() {
+		if (tagParts[2] == targetField.String() && fieldValue != "") || tagParts[2] != targetField.String() {
 			return true
 		}
 		return false
 	} else if tagParts[1] == "!=" {
-		if (tagParts[2] != targetField.String() && fieldValue != "") || (tagParts[2] != targetField.String()) {
+		if (tagParts[2] != targetField.String() && fieldValue != "") || (tagParts[2] == targetField.String()) {
 			return true
 		}
 
